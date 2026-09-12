@@ -75,4 +75,17 @@ export default function LogWorkout({ userId, onGuardado }) {
             <button type="button" onClick={() => quitarEjercicio(i)} style={{ background: 'none', border: 'none', color: 'var(--steel)' }}>✕</button>
           </div>
         ))}
-        <button type="button" className="btn-secondary" style={{
+        <button type="button" className="btn-secondary" style={{ marginBottom: 16 }} onClick={agregarEjercicio}>+ Agregar ejercicio</button>
+
+        <div className="field-group">
+          <label>Sensaciones</label>
+          <textarea rows={3} value={sensaciones} onChange={(e) => setSensaciones(e.target.value)} />
+        </div>
+
+        <button className="btn-primary" type="submit" disabled={guardando}>
+          {guardando ? 'Guardando...' : 'Guardar entrenamiento'}
+        </button>
+      </form>
+    </div>
+  )
+}
