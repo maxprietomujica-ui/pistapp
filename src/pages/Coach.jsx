@@ -8,31 +8,46 @@ export default function Coach({ marcas, entrenamientos }) {
   const [respuesta, setRespuesta] = useState('')
   const [cargando, setCargando] = useState(false)
 
-  async function preguntar(preguntaFija) {
-    const propias = marcas.filter((m) => m.disciplina === seleccion)
-    if (!propias.length) return
-    const deporte = propias[0].deporte
+  const hayMarcas = disciplinas.length > 0
+  const hayEntrenamientos = entrenamientos.length > 0
 
+  async function preguntar(preguntaFija) {
     setCargando(true)
     setRespuesta('')
 
-    const estadisticas = {
-      mejorMarca: mejorMarca(propias, deporte)?.valor,
-      mejoraTotal: porcentajeMejora(propias, deporte),
-      promedioUltimas5: promedioUltimas(propias)
-    }
+    let body
 
-    const res = await fetch('/.netlify/functions/coach', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    if (hayMarcas && seleccion) {
+      const propias = marcas.filter((m) => m.disciplina === seleccion)
+      const deporte = propias[0].deporte
+      const estadisticas = {
+        mejorMarca: mejorMarca(propias, deporte)?.valor,
+        mejoraTotal: porcentajeMejora(propias, deporte),
+        promedioUltimas5: promedioUltimas(propias)
+      }
+      body = {
         deporte,
         disciplina: seleccion,
         marcas: serieParaGrafico(propias),
         entrenamientosRecientes: entrenamientos.slice(0, 5),
         estadisticas,
         pregunta: preguntaFija || pregunta
-      })
+      }
+    } else {
+      body = {
+        deporte: entrenamientos[0]?.deporte || 'atletismo',
+        disciplina: null,
+        marcas: [],
+        entrenamientosRecientes: entrenamientos.slice(0, 8),
+        estadisticas: {},
+        pregunta: preguntaFija || pregunta
+      }
+    }
+
+    const res = await fetch('/.netlify/functions/coach', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
     })
     const data = await res.json()
     setRespuesta(data.analisis || data.error || 'No se pudo generar el análisis.')
@@ -43,16 +58,26 @@ export default function Coach({ marcas, entrenamientos }) {
     <div className="page">
       <h2>Coach IA</h2>
 
-      {disciplinas.length === 0 ? (
-        <p style={{ color: 'var(--steel)' }}>Registra al menos una marca para poder analizar tu progreso.</p>
-      ) : (
-        <>
-          <div style={{ marginBottom: 16 }}>
-            {disciplinas.map((d) => (
-              <span key={d} className={`pill ${seleccion === d ? 'active' : ''}`} onClick={() => setSeleccion(d)}>{d}</span>
-            ))}
-          </div>
+      {!hayMarcas && !hayEntrenamientos && (
+        <p style={{ color: 'var(--steel)' }}>Registra al menos un entrenamiento o una marca para poder analizar tu progreso.</p>
+      )}
 
+      {hayMarcas && (
+        <div style={{ marginBottom: 16 }}>
+          {disciplinas.map((d) => (
+            <span key={d} className={`pill ${seleccion === d ? 'active' : ''}`} onClick={() => setSeleccion(d)}>{d}</span>
+          ))}
+        </div>
+      )}
+
+      {!hayMarcas && hayEntrenamientos && (
+        <p style={{ color: 'var(--steel)', fontSize: 14, marginBottom: 16 }}>
+          Todavía no tienes marcas registradas, pero puedo analizar tus últimos entrenamientos.
+        </p>
+      )}
+
+      {(hayMarcas || hayEntrenamientos) && (
+        <>
           <button className="btn-primary" style={{ marginBottom: 10 }} onClick={() => preguntar()} disabled={cargando}>
             {cargando ? 'Analizando...' : 'Analizar mi progreso'}
           </button>
