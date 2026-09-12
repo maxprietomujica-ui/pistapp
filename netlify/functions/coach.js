@@ -18,22 +18,26 @@ export async function handler(event) {
       ? 'En este deporte, MENOS tiempo es mejor rendimiento.'
       : 'En este deporte, MÁS peso o repeticiones es mejor rendimiento.'
 
+    const tieneMarcas = marcas && marcas.length > 0
+
     const prompt = `Eres un coach deportivo que analiza datos reales de un atleta. Nunca inventes números que no te dieron.
 
 Deporte: ${deporte}
-Disciplina/ejercicio: ${disciplina}
+${disciplina ? `Disciplina/ejercicio: ${disciplina}` : 'Todavía no hay una disciplina específica con marcas registradas, solo entrenamientos.'}
 ${criterio}
 
-Estadísticas ya calculadas (no las recalcules, solo interprétalas):
+${tieneMarcas ? `Estadísticas ya calculadas (no las recalcules, solo interprétalas):
 ${JSON.stringify(estadisticas, null, 2)}
 
 Marcas recientes (fecha y valor):
-${JSON.stringify(marcas, null, 2)}
+${JSON.stringify(marcas, null, 2)}` : 'Todavía no hay marcas registradas, así que basa tu análisis solo en los entrenamientos.'}
 
 Entrenamientos recientes:
 ${JSON.stringify(entrenamientosRecientes, null, 2)}
 
-${pregunta ? `Pregunta del atleta: ${pregunta}` : 'Dale un análisis breve de su progreso: tendencia, posibles puntos fuertes y una recomendación general de enfoque para las próximas semanas.'}
+${pregunta ? `Pregunta del atleta: ${pregunta}` : tieneMarcas
+  ? 'Dale un análisis breve de su progreso: tendencia, posibles puntos fuertes y una recomendación general de enfoque para las próximas semanas.'
+  : 'Dale una lectura breve de sus entrenamientos recientes: consistencia, tipo de trabajo que ha hecho, y una recomendación general de enfoque para las próximas semanas.'}
 
 Responde en español, en máximo 120 palabras, tono cercano y directo, sin inventar cifras que no se te dieron.`
 
